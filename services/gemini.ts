@@ -1,5 +1,6 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import * as FileSystem from 'expo-file-system/legacy';
+import { RECEIPT_ANALYSIS_PROMPT } from '../constants/prompts';
 
 // In a real app, use expo-env or similar. For now, we use the provided key.
 const API_KEY = "AIzaSyDjal2zAxO-ikqbUUtNSzr_TH_oOy9W58s";
@@ -24,15 +25,7 @@ export const analyzeReceipt = async (imageUri: string): Promise<ReceiptData> => 
         const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
 
         // 3. Prepare prompt
-        const prompt = `
-        Analyze this receipt image and extract the following information in JSON format:
-        - storeName: The name of the store.
-        - date: The date of the transaction (formatted as YYYY/MM/DD).
-        - totalAmount: The total amount paid (number only, remove currency symbols).
-        
-        If any field is missing or illegible, set it to null.
-        Return ONLY the JSON object, no markdown formatting.
-        `;
+        const prompt = RECEIPT_ANALYSIS_PROMPT;
 
         // 4. Generate content
         const result = await model.generateContent([
