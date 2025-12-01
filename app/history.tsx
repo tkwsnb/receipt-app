@@ -25,7 +25,7 @@ export default function HistoryScreen() {
 
     return (
         <View style={styles.container}>
-            <Text style={styles.header}>Receipt History</Text>
+            <Text style={styles.header}>履歴一覧</Text>
             <FlatList
                 data={data}
                 keyExtractor={(item) => item.id.toString()}

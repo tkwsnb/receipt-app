@@ -38,11 +38,21 @@ export default function ReceiptCamera() {
             try {
                 const photoData = await cameraRef.current.takePictureAsync();
                 if (photoData?.uri) {
-                    setPhoto(photoData.uri);
                     setLoading(true);
                     const data = await processReceiptImage(photoData.uri);
-                    setOcrResult(data);
                     setLoading(false);
+
+                    // Navigate to confirm screen with data
+                    router.push({
+                        pathname: '/confirm',
+                        params: {
+                            imageUri: photoData.uri,
+                            storeName: data.storeName,
+                            date: data.date,
+                            totalAmount: data.totalAmount?.toString(),
+                            rawText: data.rawText,
+                        }
+                    });
                 }
             } catch (error) {
                 console.error("Failed to take picture or process OCR", error);
@@ -52,63 +62,18 @@ export default function ReceiptCamera() {
         }
     };
 
-    const retake = () => {
-        setPhoto(null);
-        setOcrResult(null);
-    };
-
-    const saveReceipt = async () => {
-        if (ocrResult && photo) {
-            try {
-                await db.insert(receipts).values({
-                    storeName: ocrResult.storeName,
-                    date: ocrResult.date,
-                    totalAmount: ocrResult.totalAmount,
-                    rawText: ocrResult.rawText,
-                    imageUri: photo,
-                });
-                Alert.alert("Success", "Receipt saved!");
-                retake();
-                // Optionally navigate to history
-                // router.push('/history');
-            } catch (error) {
-                console.error("Failed to save receipt", error);
-                Alert.alert("Error", "Failed to save receipt.");
-            }
-        }
-    };
-
-    if (photo) {
-        return (
-            <View style={styles.container}>
-                <Image source={{ uri: photo }} style={styles.preview} />
-                {loading && <View style={styles.overlay}><Text style={styles.text}>Processing...</Text></View>}
-                {!loading && ocrResult && (
-                    <View style={[styles.resultContainer, { paddingBottom: insets.bottom + 20 }]}>
-                        <Text style={styles.resultText}>Store: {ocrResult.storeName}</Text>
-                        <Text style={styles.resultText}>Date: {ocrResult.date}</Text>
-                        <Text style={styles.resultText}>Total: {ocrResult.totalAmount}</Text>
-                        <View style={styles.buttonRow}>
-                            <Button title="Retake" onPress={retake} />
-                            <Button title="Save" onPress={saveReceipt} />
-                        </View>
-                    </View>
-                )}
-            </View>
-        );
-    }
-
     return (
         <View style={styles.container}>
             <CameraView style={styles.camera} facing={facing} ref={cameraRef}>
                 <View style={styles.buttonContainer}>
                     <TouchableOpacity style={styles.button} onPress={takePicture}>
-                        <Text style={styles.text}>Take</Text>
+                        <Text style={styles.text}>撮影</Text>
                     </TouchableOpacity>
                     <TouchableOpacity style={styles.button} onPress={() => router.push('/history')}>
-                        <Text style={styles.text}>History</Text>
+                        <Text style={styles.text}>履歴</Text>
                     </TouchableOpacity>
                 </View>
+                {loading && <View style={styles.overlay}><Text style={styles.text}>Processing...</Text></View>}
             </CameraView>
         </View>
     );
@@ -131,6 +96,11 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         backgroundColor: 'transparent',
         margin: 64,
+        position: 'absolute',
+        bottom: 0,
+        left: 0,
+        right: 0,
+        marginBottom: 40,
     },
     button: {
         flex: 1,
@@ -146,9 +116,6 @@ const styles = StyleSheet.create({
         fontWeight: 'bold',
         color: 'black',
     },
-    preview: {
-        flex: 1,
-    },
     overlay: {
         position: 'absolute',
         top: 0,
@@ -158,25 +125,5 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center',
         backgroundColor: 'rgba(0,0,0,0.5)',
-    },
-    resultContainer: {
-        position: 'absolute',
-        bottom: 0,
-        left: 0,
-        right: 0,
-        backgroundColor: 'white',
-        padding: 20,
-        borderTopLeftRadius: 20,
-        borderTopRightRadius: 20,
-        elevation: 5,
-    },
-    resultText: {
-        fontSize: 18,
-        marginBottom: 5,
-    },
-    buttonRow: {
-        flexDirection: 'row',
-        justifyContent: 'space-around',
-        marginTop: 10,
     },
 });
