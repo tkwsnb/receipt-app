@@ -4,6 +4,7 @@ import { Button, StyleSheet, Text, TouchableOpacity, View, Image, Alert } from '
 import { processReceiptImage, ReceiptData } from '../services/ocr';
 import { initDatabase, receipts, db } from '../services/database';
 import { useRouter } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function ReceiptCamera() {
     const [facing, setFacing] = useState<CameraType>('back');
@@ -13,6 +14,7 @@ export default function ReceiptCamera() {
     const [loading, setLoading] = useState(false);
     const cameraRef = useRef<CameraView>(null);
     const router = useRouter();
+    const insets = useSafeAreaInsets();
 
     useEffect(() => {
         initDatabase();
@@ -82,7 +84,7 @@ export default function ReceiptCamera() {
                 <Image source={{ uri: photo }} style={styles.preview} />
                 {loading && <View style={styles.overlay}><Text style={styles.text}>Processing...</Text></View>}
                 {!loading && ocrResult && (
-                    <View style={styles.resultContainer}>
+                    <View style={[styles.resultContainer, { paddingBottom: insets.bottom + 20 }]}>
                         <Text style={styles.resultText}>Store: {ocrResult.storeName}</Text>
                         <Text style={styles.resultText}>Date: {ocrResult.date}</Text>
                         <Text style={styles.resultText}>Total: {ocrResult.totalAmount}</Text>
@@ -137,6 +139,7 @@ const styles = StyleSheet.create({
         backgroundColor: 'white',
         padding: 15,
         borderRadius: 10,
+        marginHorizontal: 10,
     },
     text: {
         fontSize: 24,
@@ -165,6 +168,7 @@ const styles = StyleSheet.create({
         padding: 20,
         borderTopLeftRadius: 20,
         borderTopRightRadius: 20,
+        elevation: 5,
     },
     resultText: {
         fontSize: 18,

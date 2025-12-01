@@ -9,9 +9,9 @@ export interface ReceiptData {
 
 export const processReceiptImage = async (imageUri: string): Promise<ReceiptData> => {
     try {
-        // Cast to any to avoid type errors if types are missing
-        const result = await (TextRecognition as any).recognize(imageUri);
-        const text = result.map((block: any) => block.text).join('\n');
+        // Use detectFromUri as per the library's API
+        const result = await TextRecognition.detectFromUri(imageUri);
+        const text = result.map((block) => block.text).join('\n');
 
         const date = extractDate(text);
         const totalAmount = extractTotal(text);
