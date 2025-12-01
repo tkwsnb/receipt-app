@@ -11,8 +11,10 @@
   "dependencies": {
     "drizzle-orm": "^0.44.7",
     "expo": "~54.0.25",
+    "expo-build-properties": "~1.0.9",
     "expo-camera": "^17.0.9",
     "expo-constants": "~18.0.10",
+    "expo-keep-awake": "~15.0.7",
     "expo-linking": "~8.0.9",
     "expo-router": "~6.0.15",
     "expo-sqlite": "^16.0.9",

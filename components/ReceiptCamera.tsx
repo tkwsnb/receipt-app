@@ -94,66 +94,85 @@ export default function ReceiptCamera() {
                 )}
             </View>
         );
-        container: {
-            flex: 1,
-                justifyContent: 'center',
+    }
+
+    return (
+        <View style={styles.container}>
+            <CameraView style={styles.camera} facing={facing} ref={cameraRef}>
+                <View style={styles.buttonContainer}>
+                    <TouchableOpacity style={styles.button} onPress={takePicture}>
+                        <Text style={styles.text}>Take</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity style={styles.button} onPress={() => router.push('/history')}>
+                        <Text style={styles.text}>History</Text>
+                    </TouchableOpacity>
+                </View>
+            </CameraView>
+        </View>
+    );
+}
+
+const styles = StyleSheet.create({
+    container: {
+        flex: 1,
+        justifyContent: 'center',
     },
-        message: {
-            textAlign: 'center',
-                paddingBottom: 10,
+    message: {
+        textAlign: 'center',
+        paddingBottom: 10,
     },
-        camera: {
-            flex: 1,
+    camera: {
+        flex: 1,
     },
-        buttonContainer: {
-            flex: 1,
-                flexDirection: 'row',
-                    backgroundColor: 'transparent',
-                        margin: 64,
+    buttonContainer: {
+        flex: 1,
+        flexDirection: 'row',
+        backgroundColor: 'transparent',
+        margin: 64,
     },
-        button: {
-            flex: 1,
-                alignSelf: 'flex-end',
-                    alignItems: 'center',
-                        backgroundColor: 'white',
-                            padding: 15,
-                                borderRadius: 10,
+    button: {
+        flex: 1,
+        alignSelf: 'flex-end',
+        alignItems: 'center',
+        backgroundColor: 'white',
+        padding: 15,
+        borderRadius: 10,
     },
-        text: {
-            fontSize: 24,
-                fontWeight: 'bold',
-                    color: 'black',
+    text: {
+        fontSize: 24,
+        fontWeight: 'bold',
+        color: 'black',
     },
-        preview: {
-            flex: 1,
+    preview: {
+        flex: 1,
     },
-        overlay: {
-            position: 'absolute',
-                top: 0,
-                    left: 0,
-                        right: 0,
-                            bottom: 0,
-                                justifyContent: 'center',
-                                    alignItems: 'center',
-                                        backgroundColor: 'rgba(0,0,0,0.5)',
+    overlay: {
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        justifyContent: 'center',
+        alignItems: 'center',
+        backgroundColor: 'rgba(0,0,0,0.5)',
     },
-        resultContainer: {
-            position: 'absolute',
-                bottom: 0,
-                    left: 0,
-                        right: 0,
-                            backgroundColor: 'white',
-                                padding: 20,
-                                    borderTopLeftRadius: 20,
-                                        borderTopRightRadius: 20,
+    resultContainer: {
+        position: 'absolute',
+        bottom: 0,
+        left: 0,
+        right: 0,
+        backgroundColor: 'white',
+        padding: 20,
+        borderTopLeftRadius: 20,
+        borderTopRightRadius: 20,
     },
-        resultText: {
-            fontSize: 18,
-                marginBottom: 5,
+    resultText: {
+        fontSize: 18,
+        marginBottom: 5,
     },
-        buttonRow: {
-            flexDirection: 'row',
-                justifyContent: 'space-around',
-                    marginTop: 10,
+    buttonRow: {
+        flexDirection: 'row',
+        justifyContent: 'space-around',
+        marginTop: 10,
     },
-    });
+});
