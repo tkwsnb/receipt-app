@@ -2,7 +2,7 @@ import { View, Text, FlatList, StyleSheet, TouchableOpacity, Alert, BackHandler 
 import { useEffect, useState, useCallback } from 'react';
 import { db, receipts, Receipt } from '../services/database';
 import { desc, inArray } from 'drizzle-orm';
-import { useFocusEffect } from 'expo-router';
+import { useFocusEffect, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function HistoryScreen() {
@@ -10,6 +10,7 @@ export default function HistoryScreen() {
     const [selectedIds, setSelectedIds] = useState<number[]>([]);
     const [isSelectionMode, setIsSelectionMode] = useState(false);
     const insets = useSafeAreaInsets();
+    const router = useRouter();
 
     const loadData = async () => {
         try {
@@ -56,11 +57,21 @@ export default function HistoryScreen() {
         }
     };
 
-    const handlePress = (id: number) => {
+    const handlePress = (item: Receipt) => {
         if (isSelectionMode) {
-            toggleSelection(id);
+            toggleSelection(item.id);
         } else {
-            // Future: Navigate to detail view
+            router.push({
+                pathname: '/confirm',
+                params: {
+                    id: item.id,
+                    imageUri: item.imageUri,
+                    storeName: item.storeName,
+                    date: item.date,
+                    totalAmount: item.totalAmount?.toString(),
+                    rawText: item.rawText
+                }
+            });
         }
     };
 
@@ -102,23 +113,30 @@ export default function HistoryScreen() {
                         <TouchableOpacity
                             style={[styles.item, isSelected && styles.selectedItem]}
                             onLongPress={() => handleLongPress(item.id)}
-                            onPress={() => handlePress(item.id)}
+                            onPress={() => handlePress(item)}
                             delayLongPress={300}
                         >
-                            <Text style={styles.store}>{item.storeName || 'Unknown Store'}</Text>
                             <Text style={styles.date}>{item.date || 'No Date'}</Text>
+                            <Text style={styles.store}>{item.storeName || 'Unknown Store'}</Text>
                             <Text style={styles.amount}>¥{item.totalAmount?.toLocaleString() || '0'}</Text>
                         </TouchableOpacity>
                     );
                 }}
             />
-            {isSelectionMode && (
-                <View style={[styles.footer, { paddingBottom: insets.bottom + 20 }]}>
+
+            <View style={[styles.footer, { paddingBottom: insets.bottom + 20 }]}>
+                {!isSelectionMode && (
+                    <TouchableOpacity style={styles.cameraButton} onPress={() => router.dismissTo('/')}>
+                        <Text style={styles.cameraButtonText}>📷</Text>
+                    </TouchableOpacity>
+                )}
+
+                {isSelectionMode && (
                     <TouchableOpacity style={styles.deleteButton} onPress={handleDelete}>
                         <Text style={styles.deleteButtonText}>🗑️ 削除 ({selectedIds.length})</Text>
                     </TouchableOpacity>
-                </View>
-            )}
+                )}
+            </View>
         </View>
     );
 }
@@ -150,11 +168,13 @@ const styles = StyleSheet.create({
         fontSize: 16,
         fontWeight: 'bold',
         flex: 1,
+        marginLeft: 10, // Add margin to separate from date
     },
     date: {
         fontSize: 14,
         color: '#666',
-        marginRight: 10,
+        // marginRight: 10, // Removed, using marginLeft on store instead or keep it?
+        // Let's keep it simple.
     },
     amount: {
         fontSize: 16,
@@ -165,12 +185,11 @@ const styles = StyleSheet.create({
         bottom: 0,
         left: 0,
         right: 0,
-        backgroundColor: 'rgba(255, 255, 255, 0.9)',
+        backgroundColor: 'transparent',
         padding: 20,
-        borderTopWidth: 1,
-        borderTopColor: '#eee',
         flexDirection: 'row',
-        justifyContent: 'flex-end', // Right aligned
+        justifyContent: 'space-between',
+        pointerEvents: 'box-none', // Allow clicks through transparent areas
     },
     deleteButton: {
         backgroundColor: '#ff4444',
@@ -179,10 +198,30 @@ const styles = StyleSheet.create({
         borderRadius: 20,
         flexDirection: 'row',
         alignItems: 'center',
+        marginLeft: 'auto', // Push to right
     },
     deleteButtonText: {
         color: 'white',
         fontWeight: 'bold',
         fontSize: 16,
     },
+    cameraButton: {
+        backgroundColor: '#007AFF',
+        width: 60,
+        height: 60,
+        borderRadius: 30,
+        alignItems: 'center',
+        justifyContent: 'center',
+        shadowColor: "#000",
+        shadowOffset: {
+            width: 0,
+            height: 2,
+        },
+        shadowOpacity: 0.25,
+        shadowRadius: 3.84,
+        elevation: 5,
+    },
+    cameraButtonText: {
+        fontSize: 30,
+    }
 });

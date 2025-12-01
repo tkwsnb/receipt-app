@@ -3,6 +3,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useState } from 'react';
 import { db, receipts } from '../services/database';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { eq } from 'drizzle-orm';
 
 export default function ConfirmScreen() {
     const params = useLocalSearchParams();
@@ -16,23 +17,36 @@ export default function ConfirmScreen() {
 
     // rawText might be useful for debugging or advanced editing later
     const rawText = params.rawText as string || '';
+    const id = params.id ? Number(params.id) : null;
 
     const handleSave = async () => {
         try {
             // Validate amount
             const amount = parseInt(totalAmount.replace(/[^0-9]/g, ''), 10);
 
-            await db.insert(receipts).values({
-                storeName,
-                date,
-                totalAmount: isNaN(amount) ? 0 : amount,
-                rawText,
-                imageUri,
-            });
+            if (id) {
+                await db.update(receipts).set({
+                    storeName,
+                    date,
+                    totalAmount: isNaN(amount) ? 0 : amount,
+                }).where(eq(receipts.id, id));
 
-            Alert.alert("保存完了", "レシートを保存しました", [
-                { text: "OK", onPress: () => router.dismissTo('/') }
-            ]);
+                Alert.alert("更新完了", "レシートを更新しました", [
+                    { text: "OK", onPress: () => router.back() }
+                ]);
+            } else {
+                await db.insert(receipts).values({
+                    storeName,
+                    date,
+                    totalAmount: isNaN(amount) ? 0 : amount,
+                    rawText,
+                    imageUri,
+                });
+
+                Alert.alert("保存完了", "レシートを保存しました", [
+                    { text: "OK", onPress: () => router.dismissTo('/') }
+                ]);
+            }
         } catch (error) {
             console.error("Failed to save receipt", error);
             Alert.alert("エラー", "保存に失敗しました");
@@ -78,10 +92,10 @@ export default function ConfirmScreen() {
 
             <View style={styles.footer}>
                 <TouchableOpacity style={[styles.button, styles.retryButton]} onPress={() => router.back()}>
-                    <Text style={styles.buttonText}>リトライ</Text>
+                    <Text style={styles.buttonText}>キャンセル</Text>
                 </TouchableOpacity>
                 <TouchableOpacity style={[styles.button, styles.saveButton]} onPress={handleSave}>
-                    <Text style={[styles.buttonText, styles.saveButtonText]}>登録</Text>
+                    <Text style={[styles.buttonText, styles.saveButtonText]}>{id ? "更新" : "登録"}</Text>
                 </TouchableOpacity>
             </View>
         </KeyboardAvoidingView>
