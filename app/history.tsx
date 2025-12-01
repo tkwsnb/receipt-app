@@ -1,5 +1,5 @@
 import { View, Text, FlatList, StyleSheet, TouchableOpacity, Alert, BackHandler } from 'react-native';
-import { useEffect, useState, useCallback } from 'react';
+import { useState, useCallback } from 'react';
 import { db, receipts, Receipt } from '../services/database';
 import { desc, inArray } from 'drizzle-orm';
 import { useFocusEffect, useRouter } from 'expo-router';
@@ -107,21 +107,14 @@ export default function HistoryScreen() {
                 data={data}
                 keyExtractor={(item) => item.id.toString()}
                 contentContainerStyle={{ paddingBottom: 100 }}
-                renderItem={({ item }) => {
-                    const isSelected = selectedIds.includes(item.id);
-                    return (
-                        <TouchableOpacity
-                            style={[styles.item, isSelected && styles.selectedItem]}
-                            onLongPress={() => handleLongPress(item.id)}
-                            onPress={() => handlePress(item)}
-                            delayLongPress={300}
-                        >
-                            <Text style={styles.date}>{item.date || 'No Date'}</Text>
-                            <Text style={styles.store}>{item.storeName || 'Unknown Store'}</Text>
-                            <Text style={styles.amount}>¥{item.totalAmount?.toLocaleString() || '0'}</Text>
-                        </TouchableOpacity>
-                    );
-                }}
+                renderItem={({ item }) => (
+                    <ReceiptListItem
+                        item={item}
+                        isSelected={selectedIds.includes(item.id)}
+                        onLongPress={handleLongPress}
+                        onPress={handlePress}
+                    />
+                )}
             />
 
             <View style={[styles.footer, { paddingBottom: insets.bottom + 20 }]}>
@@ -140,6 +133,24 @@ export default function HistoryScreen() {
         </View>
     );
 }
+
+const ReceiptListItem = ({ item, isSelected, onLongPress, onPress }: {
+    item: Receipt,
+    isSelected: boolean,
+    onLongPress: (id: number) => void,
+    onPress: (item: Receipt) => void
+}) => (
+    <TouchableOpacity
+        style={[styles.item, isSelected && styles.selectedItem]}
+        onLongPress={() => onLongPress(item.id)}
+        onPress={() => onPress(item)}
+        delayLongPress={300}
+    >
+        <Text style={styles.date}>{item.date || 'No Date'}</Text>
+        <Text style={styles.store}>{item.storeName || 'Unknown Store'}</Text>
+        <Text style={styles.amount}>¥{item.totalAmount?.toLocaleString() || '0'}</Text>
+    </TouchableOpacity>
+);
 
 const styles = StyleSheet.create({
     container: {
