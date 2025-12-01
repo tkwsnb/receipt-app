@@ -1,16 +1,14 @@
 import { CameraView, CameraType, useCameraPermissions } from 'expo-camera';
 import { useState, useRef, useEffect } from 'react';
 import { Button, StyleSheet, Text, TouchableOpacity, View, Image, Alert } from 'react-native';
-import { processReceiptImage, ReceiptData } from '../services/ocr';
-import { initDatabase, receipts, db } from '../services/database';
+import { analyzeReceipt, ReceiptData } from '../services/gemini';
+import { initDatabase } from '../services/database';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function ReceiptCamera() {
     const [facing, setFacing] = useState<CameraType>('back');
     const [permission, requestPermission] = useCameraPermissions();
-    const [photo, setPhoto] = useState<string | null>(null);
-    const [ocrResult, setOcrResult] = useState<ReceiptData | null>(null);
     const [loading, setLoading] = useState(false);
     const cameraRef = useRef<CameraView>(null);
     const router = useRouter();
@@ -36,28 +34,33 @@ export default function ReceiptCamera() {
     const takePicture = async () => {
         if (cameraRef.current) {
             try {
-                const photoData = await cameraRef.current.takePictureAsync();
-                if (photoData?.uri) {
-                    setLoading(true);
-                    const data = await processReceiptImage(photoData.uri);
-                    setLoading(false);
+                setLoading(true);
+                const photo = await cameraRef.current.takePictureAsync({
+                    quality: 0.8,
+                    base64: false,
+                    skipProcessing: true,
+                });
 
-                    // Navigate to confirm screen with data
+                if (photo?.uri) {
+                    // Analyze with Gemini
+                    const result = await analyzeReceipt(photo.uri);
+
                     router.push({
                         pathname: '/confirm',
                         params: {
-                            imageUri: photoData.uri,
-                            storeName: data.storeName,
-                            date: data.date,
-                            totalAmount: data.totalAmount?.toString(),
-                            rawText: data.rawText,
+                            imageUri: photo.uri,
+                            storeName: result.storeName,
+                            date: result.date,
+                            totalAmount: result.totalAmount?.toString(),
+                            rawText: result.rawText
                         }
                     });
                 }
             } catch (error) {
-                console.error("Failed to take picture or process OCR", error);
+                console.error("Failed to take picture or analyze", error);
+                Alert.alert("エラー", "画像の解析に失敗しました");
+            } finally {
                 setLoading(false);
-                Alert.alert("Error", "Failed to process image.");
             }
         }
     };
@@ -65,7 +68,7 @@ export default function ReceiptCamera() {
     return (
         <View style={styles.container}>
             <CameraView style={styles.camera} facing={facing} ref={cameraRef} />
-            <View style={styles.buttonContainer}>
+            <View style={[styles.buttonContainer, { paddingBottom: insets.bottom }]}>
                 <TouchableOpacity style={styles.button} onPress={takePicture}>
                     <Text style={styles.text}>撮影</Text>
                 </TouchableOpacity>
@@ -73,7 +76,11 @@ export default function ReceiptCamera() {
                     <Text style={styles.text}>履歴</Text>
                 </TouchableOpacity>
             </View>
-            {loading && <View style={styles.overlay}><Text style={styles.text}>Processing...</Text></View>}
+            {loading && (
+                <View style={styles.overlay}>
+                    <Text style={styles.loadingText}>AI解析中...</Text>
+                </View>
+            )}
         </View>
     );
 }
@@ -99,7 +106,7 @@ const styles = StyleSheet.create({
         bottom: 0,
         left: 0,
         right: 0,
-        marginBottom: 40,
+        marginBottom: 20,
     },
     button: {
         flex: 1,
@@ -125,4 +132,9 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         backgroundColor: 'rgba(0,0,0,0.5)',
     },
+    loadingText: {
+        color: 'white',
+        fontSize: 24,
+        fontWeight: 'bold',
+    }
 });
