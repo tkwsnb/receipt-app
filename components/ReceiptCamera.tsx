@@ -64,17 +64,16 @@ export default function ReceiptCamera() {
 
     return (
         <View style={styles.container}>
-            <CameraView style={styles.camera} facing={facing} ref={cameraRef}>
-                <View style={styles.buttonContainer}>
-                    <TouchableOpacity style={styles.button} onPress={takePicture}>
-                        <Text style={styles.text}>撮影</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity style={styles.button} onPress={() => router.push('/history')}>
-                        <Text style={styles.text}>履歴</Text>
-                    </TouchableOpacity>
-                </View>
-                {loading && <View style={styles.overlay}><Text style={styles.text}>Processing...</Text></View>}
-            </CameraView>
+            <CameraView style={styles.camera} facing={facing} ref={cameraRef} />
+            <View style={styles.buttonContainer}>
+                <TouchableOpacity style={styles.button} onPress={takePicture}>
+                    <Text style={styles.text}>撮影</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.button} onPress={() => router.push('/history')}>
+                    <Text style={styles.text}>履歴</Text>
+                </TouchableOpacity>
+            </View>
+            {loading && <View style={styles.overlay}><Text style={styles.text}>Processing...</Text></View>}
         </View>
     );
 }
