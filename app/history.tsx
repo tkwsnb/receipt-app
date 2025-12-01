@@ -4,6 +4,8 @@ import { db, receipts, Receipt } from '../services/database';
 import { desc, inArray } from 'drizzle-orm';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { COLORS, SPACING, RADIUS, SHADOWS } from '../constants/theme';
+import { Ionicons } from '@expo/vector-icons'; // Assuming expo vector icons is available
 
 export default function HistoryScreen() {
     const [data, setData] = useState<Receipt[]>([]);
@@ -101,12 +103,16 @@ export default function HistoryScreen() {
     };
 
     return (
-        <View style={styles.container}>
-            <Text style={styles.header}>履歴一覧</Text>
+        <View style={[styles.container, { paddingTop: insets.top }]}>
+            <View style={styles.headerContainer}>
+                <Text style={styles.headerTitle}>履歴一覧</Text>
+                <Text style={styles.headerSubtitle}>{data.length} 件のレシート</Text>
+            </View>
+
             <FlatList
                 data={data}
                 keyExtractor={(item) => item.id.toString()}
-                contentContainerStyle={{ paddingBottom: 100 }}
+                contentContainerStyle={styles.listContent}
                 renderItem={({ item }) => (
                     <ReceiptListItem
                         item={item}
@@ -117,16 +123,16 @@ export default function HistoryScreen() {
                 )}
             />
 
-            <View style={[styles.footer, { paddingBottom: insets.bottom + 20 }]}>
-                {!isSelectionMode && (
-                    <TouchableOpacity style={styles.cameraButton} onPress={() => router.dismissTo('/')}>
-                        <Text style={styles.cameraButtonText}>📷</Text>
+            {/* Floating Action Buttons */}
+            <View style={[styles.fabContainer, { paddingBottom: insets.bottom + SPACING.m }]}>
+                {isSelectionMode ? (
+                    <TouchableOpacity style={[styles.fab, styles.deleteFab]} onPress={handleDelete}>
+                        <Ionicons name="trash-outline" size={24} color="white" />
+                        <Text style={styles.fabText}>削除 ({selectedIds.length})</Text>
                     </TouchableOpacity>
-                )}
-
-                {isSelectionMode && (
-                    <TouchableOpacity style={styles.deleteButton} onPress={handleDelete}>
-                        <Text style={styles.deleteButtonText}>🗑️ 削除 ({selectedIds.length})</Text>
+                ) : (
+                    <TouchableOpacity style={[styles.fab, styles.cameraFab]} onPress={() => router.dismissTo('/')}>
+                        <Ionicons name="camera" size={28} color="white" />
                     </TouchableOpacity>
                 )}
             </View>
@@ -141,98 +147,122 @@ const ReceiptListItem = ({ item, isSelected, onLongPress, onPress }: {
     onPress: (item: Receipt) => void
 }) => (
     <TouchableOpacity
-        style={[styles.item, isSelected && styles.selectedItem]}
+        style={[styles.card, isSelected && styles.selectedCard]}
         onLongPress={() => onLongPress(item.id)}
         onPress={() => onPress(item)}
         delayLongPress={300}
+        activeOpacity={0.7}
     >
-        <Text style={styles.date}>{item.date || 'No Date'}</Text>
-        <Text style={styles.store}>{item.storeName || 'Unknown Store'}</Text>
-        <Text style={styles.amount}>¥{item.totalAmount?.toLocaleString() || '0'}</Text>
+        <View style={styles.cardContent}>
+            <View style={styles.cardHeader}>
+                <Text style={styles.date}>{item.date || '----/--/--'}</Text>
+                {isSelected && <Ionicons name="checkmark-circle" size={20} color={COLORS.primary} />}
+            </View>
+            <View style={styles.cardBody}>
+                <Text style={styles.store} numberOfLines={1}>{item.storeName || '店名不明'}</Text>
+                <Text style={styles.amount}>¥{item.totalAmount?.toLocaleString() || '0'}</Text>
+            </View>
+        </View>
     </TouchableOpacity>
 );
 
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        padding: 20,
-        backgroundColor: '#fff',
+        backgroundColor: COLORS.background,
     },
-    header: {
-        fontSize: 24,
+    headerContainer: {
+        paddingHorizontal: SPACING.l,
+        paddingVertical: SPACING.m,
+        backgroundColor: COLORS.background,
+    },
+    headerTitle: {
+        fontSize: 28,
         fontWeight: 'bold',
-        marginBottom: 20,
-        marginTop: 20,
+        color: COLORS.text,
     },
-    item: {
-        padding: 15,
-        borderBottomWidth: 1,
-        borderBottomColor: '#eee',
+    headerSubtitle: {
+        fontSize: 14,
+        color: COLORS.textLight,
+        marginTop: SPACING.xs,
+    },
+    listContent: {
+        paddingHorizontal: SPACING.m,
+        paddingBottom: 100,
+    },
+    card: {
+        backgroundColor: COLORS.surface,
+        borderRadius: RADIUS.m,
+        marginBottom: SPACING.m,
+        padding: SPACING.m,
+        ...SHADOWS.card,
+        borderWidth: 1,
+        borderColor: 'transparent',
+    },
+    selectedCard: {
+        borderColor: COLORS.primary,
+        backgroundColor: '#EEF2FF', // Very light indigo
+    },
+    cardContent: {
+        flex: 1,
+    },
+    cardHeader: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
+        marginBottom: SPACING.xs,
     },
-    selectedItem: {
-        backgroundColor: '#e3f2fd',
+    cardBody: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'flex-end',
+    },
+    date: {
+        fontSize: 12,
+        color: COLORS.textLight,
+        fontWeight: '600',
     },
     store: {
         fontSize: 16,
         fontWeight: 'bold',
+        color: COLORS.text,
         flex: 1,
-        marginLeft: 10, // Add margin to separate from date
-    },
-    date: {
-        fontSize: 14,
-        color: '#666',
-        // marginRight: 10, // Removed, using marginLeft on store instead or keep it?
-        // Let's keep it simple.
+        marginRight: SPACING.m,
     },
     amount: {
-        fontSize: 16,
-        fontWeight: 'bold',
+        fontSize: 20,
+        fontWeight: '900', // Extra bold
+        color: COLORS.primary,
     },
-    footer: {
+    fabContainer: {
         position: 'absolute',
         bottom: 0,
         left: 0,
         right: 0,
-        backgroundColor: 'transparent',
-        padding: 20,
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        pointerEvents: 'box-none', // Allow clicks through transparent areas
+        alignItems: 'center',
+        pointerEvents: 'box-none',
     },
-    deleteButton: {
-        backgroundColor: '#ff4444',
-        paddingVertical: 10,
-        paddingHorizontal: 20,
-        borderRadius: 20,
+    fab: {
         flexDirection: 'row',
         alignItems: 'center',
-        marginLeft: 'auto', // Push to right
+        justifyContent: 'center',
+        borderRadius: RADIUS.full,
+        ...SHADOWS.floating,
     },
-    deleteButtonText: {
+    cameraFab: {
+        backgroundColor: COLORS.primary,
+        width: 64,
+        height: 64,
+    },
+    deleteFab: {
+        backgroundColor: COLORS.danger,
+        paddingVertical: SPACING.m,
+        paddingHorizontal: SPACING.xl,
+    },
+    fabText: {
         color: 'white',
         fontWeight: 'bold',
         fontSize: 16,
+        marginLeft: SPACING.s,
     },
-    cameraButton: {
-        backgroundColor: '#007AFF',
-        width: 60,
-        height: 60,
-        borderRadius: 30,
-        alignItems: 'center',
-        justifyContent: 'center',
-        shadowColor: "#000",
-        shadowOffset: {
-            width: 0,
-            height: 2,
-        },
-        shadowOpacity: 0.25,
-        shadowRadius: 3.84,
-        elevation: 5,
-    },
-    cameraButtonText: {
-        fontSize: 30,
-    }
 });

@@ -4,6 +4,8 @@ import { useState } from 'react';
 import { db, receipts } from '../services/database';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { eq } from 'drizzle-orm';
+import { COLORS, SPACING, RADIUS, SHADOWS } from '../constants/theme';
+import { Ionicons } from '@expo/vector-icons';
 
 export default function ConfirmScreen() {
     const params = useLocalSearchParams();
@@ -15,13 +17,11 @@ export default function ConfirmScreen() {
     const [date, setDate] = useState(params.date as string || '');
     const [totalAmount, setTotalAmount] = useState(params.totalAmount as string || '');
 
-    // rawText might be useful for debugging or advanced editing later
     const rawText = params.rawText as string || '';
     const id = params.id ? Number(params.id) : null;
 
     const handleSave = async () => {
         try {
-            // Validate amount
             const amount = parseInt(totalAmount.replace(/[^0-9]/g, ''), 10);
 
             if (id) {
@@ -59,43 +59,62 @@ export default function ConfirmScreen() {
             behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
             keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
         >
+            <View style={styles.header}>
+                <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+                    <Ionicons name="arrow-back" size={24} color={COLORS.text} />
+                </TouchableOpacity>
+                <Text style={styles.headerTitle}>{id ? "レシート編集" : "内容確認"}</Text>
+                <View style={{ width: 24 }} />
+            </View>
+
             <ScrollView contentContainerStyle={styles.scrollContent}>
-                <Image source={{ uri: imageUri }} style={styles.image} resizeMode="contain" />
+                <View style={styles.imageContainer}>
+                    <Image source={{ uri: imageUri }} style={styles.image} resizeMode="contain" />
+                </View>
 
                 <View style={styles.form}>
-                    <Text style={styles.label}>店名</Text>
-                    <TextInput
-                        style={styles.input}
-                        value={storeName}
-                        onChangeText={setStoreName}
-                        placeholder="店名を入力"
-                    />
+                    <View style={styles.inputGroup}>
+                        <Text style={styles.label}>店名</Text>
+                        <TextInput
+                            style={styles.input}
+                            value={storeName}
+                            onChangeText={setStoreName}
+                            placeholder="店名を入力"
+                            placeholderTextColor={COLORS.textLight}
+                        />
+                    </View>
 
-                    <Text style={styles.label}>日付</Text>
-                    <TextInput
-                        style={styles.input}
-                        value={date}
-                        onChangeText={setDate}
-                        placeholder="YYYY/MM/DD"
-                    />
+                    <View style={styles.inputGroup}>
+                        <Text style={styles.label}>日付</Text>
+                        <TextInput
+                            style={styles.input}
+                            value={date}
+                            onChangeText={setDate}
+                            placeholder="YYYY/MM/DD"
+                            placeholderTextColor={COLORS.textLight}
+                        />
+                    </View>
 
-                    <Text style={styles.label}>合計金額</Text>
-                    <TextInput
-                        style={styles.input}
-                        value={totalAmount}
-                        onChangeText={setTotalAmount}
-                        placeholder="0"
-                        keyboardType="numeric"
-                    />
+                    <View style={styles.inputGroup}>
+                        <Text style={styles.label}>合計金額</Text>
+                        <View style={styles.amountInputContainer}>
+                            <Text style={styles.currencySymbol}>¥</Text>
+                            <TextInput
+                                style={[styles.input, styles.amountInput]}
+                                value={totalAmount}
+                                onChangeText={setTotalAmount}
+                                placeholder="0"
+                                placeholderTextColor={COLORS.textLight}
+                                keyboardType="numeric"
+                            />
+                        </View>
+                    </View>
                 </View>
             </ScrollView>
 
             <View style={styles.footer}>
-                <TouchableOpacity style={[styles.button, styles.retryButton]} onPress={() => router.back()}>
-                    <Text style={styles.buttonText}>キャンセル</Text>
-                </TouchableOpacity>
                 <TouchableOpacity style={[styles.button, styles.saveButton]} onPress={handleSave}>
-                    <Text style={[styles.buttonText, styles.saveButtonText]}>{id ? "更新" : "登録"}</Text>
+                    <Text style={styles.saveButtonText}>{id ? "更新する" : "保存する"}</Text>
                 </TouchableOpacity>
             </View>
         </KeyboardAvoidingView>
@@ -105,61 +124,96 @@ export default function ConfirmScreen() {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#f5f5f5',
+        backgroundColor: COLORS.background,
+    },
+    header: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        paddingHorizontal: SPACING.m,
+        paddingVertical: SPACING.s,
+        backgroundColor: COLORS.background,
+    },
+    backButton: {
+        padding: SPACING.s,
+    },
+    headerTitle: {
+        fontSize: 18,
+        fontWeight: 'bold',
+        color: COLORS.text,
     },
     scrollContent: {
         flexGrow: 1,
     },
+    imageContainer: {
+        backgroundColor: COLORS.surface,
+        margin: SPACING.m,
+        borderRadius: RADIUS.l,
+        overflow: 'hidden',
+        ...SHADOWS.card,
+        height: 250,
+    },
     image: {
         width: '100%',
-        height: 300,
+        height: '100%',
         backgroundColor: '#000',
     },
     form: {
-        padding: 20,
+        padding: SPACING.m,
+    },
+    inputGroup: {
+        marginBottom: SPACING.l,
     },
     label: {
         fontSize: 14,
-        fontWeight: 'bold',
-        color: '#666',
-        marginBottom: 5,
-        marginTop: 15,
+        fontWeight: '600',
+        color: COLORS.textLight,
+        marginBottom: SPACING.s,
+        marginLeft: SPACING.xs,
     },
     input: {
-        backgroundColor: '#fff',
-        padding: 15,
-        borderRadius: 10,
+        backgroundColor: COLORS.surface,
+        padding: SPACING.m,
+        borderRadius: RADIUS.m,
         fontSize: 16,
-        borderWidth: 1,
-        borderColor: '#ddd',
+        color: COLORS.text,
+        ...SHADOWS.card,
+    },
+    amountInputContainer: {
+        position: 'relative',
+        justifyContent: 'center',
+    },
+    currencySymbol: {
+        position: 'absolute',
+        left: SPACING.m,
+        zIndex: 1,
+        fontSize: 20,
+        fontWeight: 'bold',
+        color: COLORS.textLight,
+    },
+    amountInput: {
+        paddingLeft: SPACING.xl + SPACING.s,
+        fontSize: 24,
+        fontWeight: 'bold',
+        color: COLORS.primary,
     },
     footer: {
-        flexDirection: 'row',
-        padding: 20,
-        backgroundColor: '#fff',
-        borderTopWidth: 1,
-        borderTopColor: '#eee',
+        padding: SPACING.l,
+        backgroundColor: COLORS.background,
     },
     button: {
-        flex: 1,
-        padding: 15,
-        borderRadius: 10,
+        padding: SPACING.m,
+        borderRadius: RADIUS.full,
         alignItems: 'center',
         justifyContent: 'center',
-        marginHorizontal: 5,
-    },
-    retryButton: {
-        backgroundColor: '#eee',
+        ...SHADOWS.floating,
     },
     saveButton: {
-        backgroundColor: '#007AFF',
-    },
-    buttonText: {
-        fontSize: 16,
-        fontWeight: 'bold',
-        color: '#333',
+        backgroundColor: COLORS.primary,
     },
     saveButtonText: {
-        color: '#fff',
+        color: 'white',
+        fontSize: 18,
+        fontWeight: 'bold',
     },
 });

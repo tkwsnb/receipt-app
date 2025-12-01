@@ -1,15 +1,18 @@
 import { CameraView, CameraType, useCameraPermissions } from 'expo-camera';
 import { useState, useRef, useEffect } from 'react';
-import { Button, StyleSheet, Text, TouchableOpacity, View, Image, Alert } from 'react-native';
+import { StyleSheet, Text, TouchableOpacity, View, Alert, ActivityIndicator } from 'react-native';
 import { analyzeReceipt, ReceiptData } from '../services/gemini';
 import { initDatabase } from '../services/database';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { COLORS, SPACING, RADIUS, SHADOWS } from '../constants/theme';
+import { Ionicons } from '@expo/vector-icons';
 
 export default function ReceiptCamera() {
     const [facing, setFacing] = useState<CameraType>('back');
     const [permission, requestPermission] = useCameraPermissions();
     const [loading, setLoading] = useState(false);
+    const [progress, setProgress] = useState(0);
     const cameraRef = useRef<CameraView>(null);
     const router = useRouter();
     const insets = useSafeAreaInsets();
@@ -18,6 +21,22 @@ export default function ReceiptCamera() {
         initDatabase();
     }, []);
 
+    useEffect(() => {
+        let interval: NodeJS.Timeout;
+        if (loading) {
+            setProgress(0);
+            interval = setInterval(() => {
+                setProgress((prev) => {
+                    if (prev >= 90) return prev;
+                    return prev + Math.floor(Math.random() * 10) + 1;
+                });
+            }, 500);
+        } else {
+            setProgress(100);
+        }
+        return () => clearInterval(interval);
+    }, [loading]);
+
     if (!permission) {
         return <View />;
     }
@@ -25,8 +44,10 @@ export default function ReceiptCamera() {
     if (!permission.granted) {
         return (
             <View style={styles.container}>
-                <Text style={styles.message}>We need your permission to show the camera</Text>
-                <Button onPress={requestPermission} title="grant permission" />
+                <Text style={styles.message}>カメラの使用許可が必要です</Text>
+                <TouchableOpacity style={styles.permissionButton} onPress={requestPermission}>
+                    <Text style={styles.permissionButtonText}>許可する</Text>
+                </TouchableOpacity>
             </View>
         );
     }
@@ -68,17 +89,23 @@ export default function ReceiptCamera() {
     return (
         <View style={styles.container}>
             <CameraView style={styles.camera} facing={facing} ref={cameraRef} />
-            <View style={[styles.buttonContainer, { paddingBottom: insets.bottom }]}>
-                <TouchableOpacity style={styles.button} onPress={takePicture}>
-                    <Text style={styles.text}>撮影</Text>
+
+            <View style={[styles.controlsContainer, { paddingBottom: insets.bottom + SPACING.l }]}>
+                <View style={styles.spacer} />
+
+                <TouchableOpacity style={styles.captureButton} onPress={takePicture}>
+                    <View style={styles.captureInner} />
                 </TouchableOpacity>
-                <TouchableOpacity style={styles.button} onPress={() => router.push('/history')}>
-                    <Text style={styles.text}>履歴</Text>
+
+                <TouchableOpacity style={styles.historyButton} onPress={() => router.push('/history')}>
+                    <Ionicons name="documents-outline" size={28} color="white" />
                 </TouchableOpacity>
             </View>
+
             {loading && (
                 <View style={styles.overlay}>
-                    <Text style={styles.loadingText}>AI解析中...</Text>
+                    <ActivityIndicator size="large" color={COLORS.primary} />
+                    <Text style={styles.loadingText}>AI解析中... {progress}%</Text>
                 </View>
             )}
         </View>
@@ -89,52 +116,72 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         justifyContent: 'center',
+        backgroundColor: 'black',
     },
     message: {
         textAlign: 'center',
         paddingBottom: 10,
+        color: 'white',
+    },
+    permissionButton: {
+        backgroundColor: COLORS.primary,
+        padding: SPACING.m,
+        borderRadius: RADIUS.m,
+        alignSelf: 'center',
+    },
+    permissionButtonText: {
+        color: 'white',
+        fontWeight: 'bold',
     },
     camera: {
         flex: 1,
     },
-    buttonContainer: {
-        flex: 1,
+    controlsContainer: {
+        position: 'absolute',
+        bottom: 0,
+        left: 0,
+        right: 0,
         flexDirection: 'row',
-        backgroundColor: 'transparent',
-        margin: 64,
-        position: 'absolute',
-        bottom: 0,
-        left: 0,
-        right: 0,
-        marginBottom: 20,
-    },
-    button: {
-        flex: 1,
-        alignSelf: 'flex-end',
+        justifyContent: 'space-around',
         alignItems: 'center',
-        backgroundColor: 'white',
-        padding: 15,
-        borderRadius: 10,
-        marginHorizontal: 10,
+        backgroundColor: 'rgba(0,0,0,0.3)',
+        paddingTop: SPACING.l,
     },
-    text: {
-        fontSize: 24,
-        fontWeight: 'bold',
-        color: 'black',
-    },
-    overlay: {
-        position: 'absolute',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
+    historyButton: {
+        width: 50,
+        height: 50,
+        borderRadius: RADIUS.full,
+        backgroundColor: 'rgba(255,255,255,0.2)',
         justifyContent: 'center',
         alignItems: 'center',
-        backgroundColor: 'rgba(0,0,0,0.5)',
+    },
+    captureButton: {
+        width: 80,
+        height: 80,
+        borderRadius: RADIUS.full,
+        backgroundColor: 'rgba(255,255,255,0.3)',
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    captureInner: {
+        width: 60,
+        height: 60,
+        borderRadius: RADIUS.full,
+        backgroundColor: 'white',
+    },
+    spacer: {
+        width: 50,
+    },
+    overlay: {
+        ...StyleSheet.absoluteFillObject,
+        backgroundColor: 'rgba(0,0,0,0.7)',
+        justifyContent: 'center',
+        alignItems: 'center',
     },
     loadingText: {
         color: 'white',
-        fontSize: 24,
+        fontSize: 18,
         fontWeight: 'bold',
+        marginTop: SPACING.m,
     }
 });
