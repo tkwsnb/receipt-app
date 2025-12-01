@@ -1,4 +1,5 @@
 import { View, Text, TextInput, Image, StyleSheet, ScrollView, TouchableOpacity, Alert, KeyboardAvoidingView, Platform } from 'react-native';
+import DateTimePicker from '@react-native-community/datetimepicker';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useState } from 'react';
 import { db, receipts } from '../services/database';
@@ -53,6 +54,21 @@ export default function ConfirmScreen() {
         }
     };
 
+    const [showDatePicker, setShowDatePicker] = useState(false);
+    const [dateObject, setDateObject] = useState(() => {
+        const d = new Date(params.date as string || Date.now());
+        return isNaN(d.getTime()) ? new Date() : d;
+    });
+
+    const handleDateChange = (event: any, selectedDate?: Date) => {
+        setShowDatePicker(false);
+        if (selectedDate) {
+            setDateObject(selectedDate);
+            const formatted = selectedDate.toISOString().split('T')[0].replace(/-/g, '/');
+            setDate(formatted);
+        }
+    };
+
     return (
         <KeyboardAvoidingView
             style={[styles.container, { paddingTop: insets.top, paddingBottom: insets.bottom }]}
@@ -86,13 +102,25 @@ export default function ConfirmScreen() {
 
                     <View style={styles.inputGroup}>
                         <Text style={styles.label}>日付</Text>
-                        <TextInput
-                            style={styles.input}
-                            value={date}
-                            onChangeText={setDate}
-                            placeholder="YYYY/MM/DD"
-                            placeholderTextColor={COLORS.textLight}
-                        />
+                        <TouchableOpacity onPress={() => setShowDatePicker(true)}>
+                            <View pointerEvents="none">
+                                <TextInput
+                                    style={styles.input}
+                                    value={date}
+                                    editable={false}
+                                    placeholder="YYYY/MM/DD"
+                                    placeholderTextColor={COLORS.textLight}
+                                />
+                            </View>
+                        </TouchableOpacity>
+                        {showDatePicker && (
+                            <DateTimePicker
+                                value={dateObject}
+                                mode="date"
+                                display="default"
+                                onChange={handleDateChange}
+                            />
+                        )}
                     </View>
 
                     <View style={styles.inputGroup}>
@@ -151,7 +179,7 @@ const styles = StyleSheet.create({
         borderRadius: RADIUS.l,
         overflow: 'hidden',
         ...SHADOWS.card,
-        height: 250,
+        height: 200, // Reduced height
     },
     image: {
         width: '100%',
@@ -162,13 +190,13 @@ const styles = StyleSheet.create({
         padding: SPACING.m,
     },
     inputGroup: {
-        marginBottom: SPACING.l,
+        marginBottom: SPACING.m, // Reduced margin
     },
     label: {
         fontSize: 14,
         fontWeight: '600',
         color: COLORS.textLight,
-        marginBottom: SPACING.s,
+        marginBottom: SPACING.xs, // Reduced margin
         marginLeft: SPACING.xs,
     },
     input: {
