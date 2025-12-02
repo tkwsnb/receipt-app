@@ -77,6 +77,31 @@ export default function ConfirmScreen() {
         }
     };
 
+    const handleDelete = () => {
+        Alert.alert(
+            "削除の確認",
+            "このレシートを削除しますか？",
+            [
+                { text: "キャンセル", style: "cancel" },
+                {
+                    text: "削除",
+                    style: "destructive",
+                    onPress: async () => {
+                        try {
+                            if (id) {
+                                await db.delete(receipts).where(eq(receipts.id, id));
+                                router.back();
+                            }
+                        } catch (error) {
+                            console.error("Failed to delete receipt", error);
+                            Alert.alert("エラー", "削除に失敗しました");
+                        }
+                    }
+                }
+            ]
+        );
+    };
+
     return (
         <KeyboardAvoidingView
             style={[styles.container, { paddingTop: insets.top, paddingBottom: insets.bottom }]}
@@ -149,6 +174,11 @@ export default function ConfirmScreen() {
             </ScrollView>
 
             <View style={styles.footer}>
+                {id && (
+                    <TouchableOpacity style={styles.deleteButton} onPress={handleDelete}>
+                        <Text style={styles.deleteButtonText}>このレシートを削除</Text>
+                    </TouchableOpacity>
+                )}
                 <TouchableOpacity style={[styles.button, styles.saveButton]} onPress={handleSave}>
                     <Text style={styles.saveButtonText}>{id ? "更新する" : "保存する"}</Text>
                 </TouchableOpacity>
@@ -251,5 +281,14 @@ const styles = StyleSheet.create({
         color: 'white',
         fontSize: 18,
         fontWeight: 'bold',
+    },
+    deleteButton: {
+        alignItems: 'center',
+        padding: SPACING.s,
+        marginBottom: SPACING.s,
+    },
+    deleteButtonText: {
+        color: COLORS.danger,
+        fontSize: 14,
     },
 });

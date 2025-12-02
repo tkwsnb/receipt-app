@@ -1,4 +1,4 @@
-import { View, Text, FlatList, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, FlatList, StyleSheet, TouchableOpacity, LayoutAnimation, Platform, UIManager } from 'react-native';
 import { useState, useCallback } from 'react';
 import { getMonthlyTotals, MonthlyTotal, getReceiptsByMonth, Receipt } from '../services/database';
 import { useFocusEffect, useRouter } from 'expo-router';
@@ -7,6 +7,10 @@ import { COLORS, SPACING, RADIUS, SHADOWS } from '../constants/theme';
 import { Ionicons } from '@expo/vector-icons';
 import { ReceiptListItem } from '../components/ReceiptListItem';
 import { useFab } from '../contexts/FabContext';
+
+if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
+    UIManager.setLayoutAnimationEnabledExperimental(true);
+}
 
 export default function SummaryScreen() {
     const { setFabConfig } = useFab();
@@ -40,6 +44,7 @@ export default function SummaryScreen() {
     );
 
     const toggleMonth = async (month: string) => {
+        LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
         if (expandedMonth === month) {
             setExpandedMonth(null);
         } else {
@@ -47,6 +52,7 @@ export default function SummaryScreen() {
             if (!monthData[month]) {
                 try {
                     const receipts = await getReceiptsByMonth(month);
+                    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut); // Animate the content appearance
                     setMonthData(prev => ({ ...prev, [month]: receipts }));
                 } catch (error) {
                     console.error("Failed to load month receipts", error);
