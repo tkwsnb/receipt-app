@@ -1,7 +1,7 @@
 import { drizzle } from "drizzle-orm/expo-sqlite";
 import { openDatabaseSync } from "expo-sqlite";
 import { sqliteTable, integer, text } from "drizzle-orm/sqlite-core";
-
+import { desc, inArray, like } from 'drizzle-orm';
 const expoDb = openDatabaseSync("receipts.db");
 export const db = drizzle(expoDb);
 
@@ -53,4 +53,13 @@ export const getMonthlyTotals = (): MonthlyTotal[] => {
     `;
   // expo-sqlite's getAllSync returns an array of objects
   return expoDb.getAllSync(query) as MonthlyTotal[];
+};
+
+
+
+export const getReceiptsByMonth = async (month: string): Promise<Receipt[]> => {
+  return await db.select()
+    .from(receipts)
+    .where(like(receipts.date, `${month}%`))
+    .orderBy(desc(receipts.date), desc(receipts.createdAt));
 };
