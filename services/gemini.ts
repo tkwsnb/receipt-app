@@ -3,7 +3,7 @@ import * as FileSystem from 'expo-file-system/legacy';
 import { RECEIPT_ANALYSIS_PROMPT } from '../constants/prompts';
 
 // In a real app, use expo-env or similar. For now, we use the provided key.
-const API_KEY = "AIzaSyDjal2zAxO-ikqbUUtNSzr_TH_oOy9W58s";
+const API_KEY = process.env.EXPO_PUBLIC_GEMINI_API_KEY || "";
 
 const genAI = new GoogleGenerativeAI(API_KEY);
 
