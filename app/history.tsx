@@ -106,8 +106,10 @@ export default function HistoryScreen() {
     return (
         <View style={[styles.container, { paddingTop: insets.top }]}>
             <View style={styles.headerContainer}>
-                <Text style={styles.headerTitle}>履歴一覧</Text>
-                <Text style={styles.headerSubtitle}>{data.length} 件のレシート</Text>
+                <View>
+                    <Text style={styles.headerTitle}>履歴一覧</Text>
+                    <Text style={styles.headerSubtitle}>{data.length} 件のレシート</Text>
+                </View>
             </View>
 
             <FlatList
@@ -137,6 +139,12 @@ export default function HistoryScreen() {
                     </TouchableOpacity>
                 )}
             </View>
+
+            {!isSelectionMode && (
+                <TouchableOpacity onPress={() => router.push('/summary')} style={[styles.summaryFab, { bottom: insets.bottom + 30 }]}>
+                    <Ionicons name="stats-chart" size={24} color="white" />
+                </TouchableOpacity>
+            )}
         </View>
     );
 }
@@ -195,5 +203,17 @@ const styles = StyleSheet.create({
         fontWeight: 'bold',
         fontSize: 16,
         marginLeft: SPACING.s,
+    },
+    summaryFab: {
+        position: 'absolute',
+        bottom: 30,
+        right: 20,
+        width: 56,
+        height: 56,
+        borderRadius: RADIUS.full,
+        backgroundColor: COLORS.primary, // Using primary for consistency, or maybe a different shade
+        alignItems: 'center',
+        justifyContent: 'center',
+        ...SHADOWS.floating,
     },
 });
