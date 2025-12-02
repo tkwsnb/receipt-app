@@ -1,5 +1,6 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import * as FileSystem from 'expo-file-system/legacy';
+import { manipulateAsync, SaveFormat } from 'expo-image-manipulator';
 import { RECEIPT_ANALYSIS_PROMPT } from '../constants/prompts';
 
 // In a real app, use expo-env or similar. For now, we use the provided key.
@@ -16,8 +17,15 @@ export interface ReceiptData {
 
 export const analyzeReceipt = async (imageUri: string): Promise<ReceiptData> => {
     try {
+        // 0. Resize and compress image
+        const manipulated = await manipulateAsync(
+            imageUri,
+            [{ resize: { width: 1024 } }],
+            { compress: 0.7, format: SaveFormat.JPEG }
+        );
+
         // 1. Read file as base64
-        const base64 = await FileSystem.readAsStringAsync(imageUri, {
+        const base64 = await FileSystem.readAsStringAsync(manipulated.uri, {
             encoding: 'base64',
         });
 
