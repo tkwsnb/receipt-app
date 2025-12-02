@@ -1,17 +1,25 @@
 import { View, Text, TextInput, Image, StyleSheet, ScrollView, TouchableOpacity, Alert, KeyboardAvoidingView, Platform } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useState } from 'react';
+import { useLocalSearchParams, useRouter, useFocusEffect } from 'expo-router';
+import { useState, useCallback } from 'react';
 import { db, receipts } from '../services/database';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { eq } from 'drizzle-orm';
 import { COLORS, SPACING, RADIUS, SHADOWS } from '../constants/theme';
 import { Ionicons } from '@expo/vector-icons';
+import { useFab } from '../contexts/FabContext';
 
 export default function ConfirmScreen() {
+    const { setFabConfig } = useFab();
     const params = useLocalSearchParams();
     const router = useRouter();
     const insets = useSafeAreaInsets();
+
+    useFocusEffect(
+        useCallback(() => {
+            setFabConfig({ isVisible: false, showCamera: false, showSecondary: false });
+        }, [setFabConfig])
+    );
 
     const imageUri = params.imageUri as string;
     const [storeName, setStoreName] = useState(params.storeName as string || '');

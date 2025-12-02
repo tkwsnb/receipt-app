@@ -6,8 +6,10 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { COLORS, SPACING, RADIUS, SHADOWS } from '../constants/theme';
 import { Ionicons } from '@expo/vector-icons';
 import { ReceiptListItem } from '../components/ReceiptListItem';
+import { useFab } from '../contexts/FabContext';
 
 export default function SummaryScreen() {
+    const { setFabConfig } = useFab();
     const [data, setData] = useState<MonthlyTotal[]>([]);
     const [expandedMonth, setExpandedMonth] = useState<string | null>(null);
     const [monthData, setMonthData] = useState<Record<string, Receipt[]>>({});
@@ -26,7 +28,15 @@ export default function SummaryScreen() {
     useFocusEffect(
         useCallback(() => {
             loadData();
-        }, [])
+            setFabConfig({
+                isVisible: true,
+                showCamera: true,
+                onCameraPress: () => router.dismissTo('/'),
+                showSecondary: true,
+                secondaryIcon: 'list',
+                onSecondaryPress: () => router.back()
+            });
+        }, [setFabConfig])
     );
 
     const toggleMonth = async (month: string) => {
@@ -120,15 +130,7 @@ export default function SummaryScreen() {
                 }
             />
 
-            {/* FABs */}
-            <View style={[styles.fabContainer, { paddingBottom: insets.bottom + SPACING.m }]}>
-                <TouchableOpacity onPress={() => router.dismissTo('/')} style={[styles.fab, styles.cameraFab]}>
-                    <Ionicons name="camera" size={28} color="white" />
-                </TouchableOpacity>
-            </View>
-            <TouchableOpacity onPress={() => router.back()} style={[styles.listFab, { bottom: insets.bottom + 30 }]}>
-                <Ionicons name="list" size={24} color="white" />
-            </TouchableOpacity>
+
         </View>
     );
 }

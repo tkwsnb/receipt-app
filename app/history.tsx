@@ -5,10 +5,12 @@ import { desc, inArray } from 'drizzle-orm';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { COLORS, SPACING, RADIUS, SHADOWS } from '../constants/theme';
-import { Ionicons } from '@expo/vector-icons'; // Assuming expo vector icons is available
+import { Ionicons } from '@expo/vector-icons';
 import { ReceiptListItem } from '../components/ReceiptListItem';
+import { useFab } from '../contexts/FabContext';
 
 export default function HistoryScreen() {
+    const { setFabConfig } = useFab();
     const [data, setData] = useState<Receipt[]>([]);
     const [selectedIds, setSelectedIds] = useState<number[]>([]);
     const [isSelectionMode, setIsSelectionMode] = useState(false);
@@ -27,6 +29,16 @@ export default function HistoryScreen() {
     useFocusEffect(
         useCallback(() => {
             loadData();
+
+            setFabConfig({
+                isVisible: !isSelectionMode,
+                showCamera: true,
+                onCameraPress: () => router.dismissTo('/'),
+                showSecondary: true,
+                secondaryIcon: 'stats-chart',
+                onSecondaryPress: () => router.push('/summary')
+            });
+
             const onBackPress = () => {
                 if (isSelectionMode) {
                     setIsSelectionMode(false);
@@ -38,7 +50,7 @@ export default function HistoryScreen() {
 
             const backHandler = BackHandler.addEventListener('hardwareBackPress', onBackPress);
             return () => backHandler.remove();
-        }, [isSelectionMode])
+        }, [isSelectionMode, setFabConfig])
     );
 
     const toggleSelection = (id: number) => {
@@ -127,23 +139,13 @@ export default function HistoryScreen() {
             />
 
             {/* Floating Action Buttons */}
-            <View style={[styles.fabContainer, { paddingBottom: insets.bottom + SPACING.m }]}>
-                {isSelectionMode ? (
+            {isSelectionMode && (
+                <View style={[styles.fabContainer, { paddingBottom: insets.bottom + SPACING.m }]}>
                     <TouchableOpacity style={[styles.fab, styles.deleteFab]} onPress={handleDelete}>
                         <Ionicons name="trash-outline" size={24} color="white" />
                         <Text style={styles.fabText}>削除 ({selectedIds.length})</Text>
                     </TouchableOpacity>
-                ) : (
-                    <TouchableOpacity style={[styles.fab, styles.cameraFab]} onPress={() => router.dismissTo('/')}>
-                        <Ionicons name="camera" size={28} color="white" />
-                    </TouchableOpacity>
-                )}
-            </View>
-
-            {!isSelectionMode && (
-                <TouchableOpacity onPress={() => router.push('/summary')} style={[styles.summaryFab, { bottom: insets.bottom + 30 }]}>
-                    <Ionicons name="stats-chart" size={24} color="white" />
-                </TouchableOpacity>
+                </View>
             )}
         </View>
     );
